@@ -33,3 +33,6 @@ Thumbs.db
 
 # 数据重建备份
 content/.backup/
+
+# 本地 git 凭据助手生成（windows askpass / ssh 包装脚本）
+.deploy/

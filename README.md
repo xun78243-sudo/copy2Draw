@@ -63,7 +63,7 @@ npm run typecheck # 仅做类型检查
     │   └── usePageMeta.ts     # 动态标题与 description
     ├── layouts/DefaultLayout.vue # 侧边栏 + 移动顶栏 + <RouterView>
     ├── components
-    │   ├── AppSidebar.vue        # 侧栏导航、12 大类与细分类树
+    │   ├── AppSidebar.vue        # 侧栏导航、12 大类可折叠的细分类树、投稿入口
     │   ├── MobileTopBar.vue      # 移动端顶栏
     │   ├── HeroSection.vue       # 首页 Hero、搜索、统计与分类快捷入口
     │   ├── CategoryFilterTabs.vue# 大类筛选标签
@@ -134,7 +134,7 @@ npm run typecheck # 仅做类型检查
 - 路由切换自动回到页首（`scrollBehavior`），并同步 `document.title`。
 - 卡片操作统一使用 `@click.stop`，避免点收藏/复制时误触发跳转。
 - 5,430 条数据一次挂载会卡，发现页采用「首屏 24 条 + 滚动到底自动追加 + 加载更多兜底」的增量渲染；筛选条件变化时自动回到第一页。
-- 侧边栏细分类树限制高度并可滚动，避免 79 条细分类撑破抽屉。
+- 侧栏分类树按大类折叠：大类行本身负责筛选，箭头独立展开/收起它的细分类；当前大类自动展开，展开后由整条侧栏滚动（不再在树里套一层滚动条），「投稿」固定在所有分类之后。
 
 ## 验证情况
 

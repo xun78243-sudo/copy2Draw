@@ -8,7 +8,9 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "vue-tsc --noEmit"
+    "typecheck": "vue-tsc --noEmit",
+    "data:build": "node scripts/build-data.mjs",
+    "data:check": "node scripts/check-data.mjs"
   },
   "dependencies": {
     "pinia": "^3.0.4",

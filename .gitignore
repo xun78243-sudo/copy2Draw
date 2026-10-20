@@ -30,3 +30,6 @@ Thumbs.db
 # TypeScript / Vite 缓存
 *.tsbuildinfo
 .vite/
+
+# 数据重建备份
+content/.backup/

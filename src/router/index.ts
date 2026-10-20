@@ -11,6 +11,23 @@ declare module 'vue-router' {
 /** 站点默认标题，未声明 meta.title 的路由回退到该值 */
 const SITE_TITLE = '复制即画 Copy2Draw'
 
+/**
+ * 内容管理只在开发服务器可用。
+ * 需要线上试玩时设 `VITE_ENABLE_STUDIO=1`；否则该路由与对应 chunk 都不会出现在构建产物里。
+ */
+const STUDIO_ENABLED = import.meta.env.DEV || import.meta.env.VITE_ENABLE_STUDIO === '1'
+
+const studioRoutes: RouteRecordRaw[] = STUDIO_ENABLED
+  ? [
+      {
+        path: '/studio',
+        name: 'studio',
+        component: () => import('@/views/StudioView.vue'),
+        meta: { title: `内容管理｜${SITE_TITLE}` },
+      },
+    ]
+  : []
+
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
@@ -42,6 +59,7 @@ const routes: RouteRecordRaw[] = [
     name: 'prompt-detail',
     component: () => import('@/views/PromptDetailView.vue'),
   },
+  ...studioRoutes,
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',

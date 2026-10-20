@@ -41,6 +41,8 @@ export interface LibraryMeta {
   majors: MajorCategory[]
   /** 分类配色表：分类名 → 主色 / 浅底色 */
   colors: Record<string, { main: string; bg: string }>
+  /** 分片数量（list.part1~N.json / prompts.part1~N.json），缺省按 3 处理 */
+  shards?: number
 }
 
 /** data/list.part*.json 的条目：轻量列表，不含正文 */

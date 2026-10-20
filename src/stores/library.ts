@@ -20,8 +20,13 @@ import { DATA_BASE, countFacet, toPrompt, toPromptDetail } from '@/data/library'
  * 两份数据都以模块级 Promise 缓存，重复调用不会重复请求。
  */
 
-const LIST_PARTS = ['list.part1.json', 'list.part2.json', 'list.part3.json'] as const
-const FULL_PARTS = ['prompts.part1.json', 'prompts.part2.json', 'prompts.part3.json'] as const
+/** 分片数缺省值；实际数量由 meta.json 的 shards 字段决定（见 scripts/build-data.mjs） */
+const DEFAULT_SHARDS = 3
+
+/** 生成分片文件名：list.part1.json … / prompts.part1.json … */
+function partNames(prefix: 'list' | 'prompts', shards: number): string[] {
+  return Array.from({ length: Math.max(1, shards) }, (_, index) => `${prefix}.part${index + 1}.json`)
+}
 
 /** 首页「每日精选」的候选池大小：点赞数最高的一批 */
 const FEATURED_POOL_SIZE = 120
@@ -116,7 +121,11 @@ export const useLibraryStore = defineStore('library', () => {
       ])
       meta.value = metaJson
       categories.value = categoryJson
-      const parts = await Promise.all(LIST_PARTS.map((part) => fetchJson<PromptRecordRaw[]>(part)))
+      const parts = await Promise.all(
+        partNames('list', metaJson.shards ?? DEFAULT_SHARDS).map((part) =>
+          fetchJson<PromptRecordRaw[]>(part),
+        ),
+      )
       items.value = parts.flat().map((raw) => toPrompt(raw, majorOfCategory))
     } catch (cause) {
       error.value = cause instanceof Error ? cause.message : String(cause)
@@ -141,8 +150,12 @@ export const useLibraryStore = defineStore('library', () => {
   async function loadFullText(): Promise<void> {
     fullTextLoading.value = true
     try {
+      // 正文分片数量同样来自 meta；首屏未加载时先补齐
+      if (!meta.value) await ensureLoaded()
       const settled = await Promise.allSettled(
-        FULL_PARTS.map((part) => fetchJson<PromptDetailRaw[]>(part)),
+        partNames('prompts', meta.value?.shards ?? DEFAULT_SHARDS).map((part) =>
+          fetchJson<PromptDetailRaw[]>(part),
+        ),
       )
       const map = new Map<number, string>()
       let succeeded = 0

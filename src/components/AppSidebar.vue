@@ -25,6 +25,15 @@ const activeCategory = computed(() => {
   return typeof value === 'string' ? value : ''
 })
 
+/** 分类树是否展示；在「发现提示词」页再次点击导航项可收起 */
+const treeOpen = ref(true)
+
+const treeVisible = computed(() => isDiscover.value && treeOpen.value)
+
+watch(isDiscover, (discover) => {
+  if (discover) treeOpen.value = true
+})
+
 /** 手动展开的大类；当前所在的大类会在路由或数据变化时自动加入 */
 const openGroups = ref<string[]>([])
 
@@ -61,9 +70,30 @@ function toggleGroup(major: string): void {
     : [...openGroups.value, major]
 }
 
-/** 点大类的公共处理：确保展开，并关闭移动端抽屉 */
-function onMajorClick(major: string): void {
+/** 点大类名：非当前大类时前往筛选并展开；已是当前大类时切换收起/展开 */
+function onMajorClick(event: MouseEvent, major: string): void {
+  if (activeMajor.value === major && isPlainClick(event)) {
+    event.preventDefault()
+    toggleGroup(major)
+    return
+  }
   ensureGroupOpen(major)
+  ui.closeMobileNav()
+}
+
+/** 带修饰键或非左键的点击保留浏览器默认行为（如新标签页打开） */
+function isPlainClick(event: MouseEvent): boolean {
+  return !event.metaKey && !event.ctrlKey && !event.altKey && !event.shiftKey && event.button === 0
+}
+
+/** 已在「发现提示词」页时，再次点击只收起/展开分类树，不重复导航 */
+function onDiscoverClick(event: MouseEvent): void {
+  if (isDiscover.value && isPlainClick(event)) {
+    event.preventDefault()
+    treeOpen.value = !treeOpen.value
+    return
+  }
+  treeOpen.value = true
   ui.closeMobileNav()
 }
 
@@ -105,13 +135,13 @@ function allTarget() {
         class="nav-item"
         :class="{ active: isDiscover }"
         :to="allTarget()"
-        @click="ui.closeMobileNav()"
+        @click.capture="onDiscoverClick"
       >
         <AppIcon name="grid" /><span>发现提示词</span>
-        <small class="nav-chevron" :class="{ open: isDiscover }">›</small>
+        <small class="nav-chevron" :class="{ open: treeVisible }">›</small>
       </RouterLink>
 
-      <div v-if="isDiscover" class="category-tree">
+      <div v-if="treeVisible" class="category-tree">
         <RouterLink
           class="nav-item"
           :class="{ 'sub-active': !activeGroup }"
@@ -129,7 +159,7 @@ function allTarget() {
               class="nav-item"
               :class="{ 'sub-active': activeGroup === major.name && !activeCategory }"
               :to="majorTarget(major.name)"
-              @click="onMajorClick(major.name)"
+              @click.capture="onMajorClick($event, major.name)"
             >
               <span class="category-dot" :style="{ background: major.main }" />
               <span>{{ major.name }}</span>
@@ -163,7 +193,7 @@ function allTarget() {
         </div>
       </div>
 
-      <div v-if="isDiscover" class="nav-divider" />
+      <div v-if="treeVisible" class="nav-divider" />
 
       <RouterLink
         class="nav-item"

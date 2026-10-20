@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppIcon from '@/components/base/AppIcon.vue'
 
-const SUBMIT_EMAIL = 'sun.demo@outlook.com'
+const SUBMIT_EMAIL = 'copy2draw@gmail.com'
 const MAIL_SUBJECT = '投稿 + 分类'
 const mailto = `mailto:${SUBMIT_EMAIL}?subject=${encodeURIComponent(MAIL_SUBJECT)}`
 </script>

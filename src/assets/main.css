@@ -1080,7 +1080,7 @@ a.shuffle-btn {
   color: #a5a1ad;
   box-shadow: 0 14px 40px #2a23431a;
   backdrop-filter: blur(12px);
-  opacity: 0.5;
+  opacity: 0.9;
   transition: opacity 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
 }
 .floating-search:hover {

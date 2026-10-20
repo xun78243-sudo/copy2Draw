@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import NotFoundView from '@/views/NotFoundView.vue'
+import DetailTopNav from '@/components/DetailTopNav.vue'
 import PromptDetailActions from '@/components/PromptDetailActions.vue'
 import { formatCount, relatedPrompts, resolvePrompt } from '@/data/library'
 import { useImageFallback } from '@/composables/useImageFallback'
@@ -39,6 +40,13 @@ const images = computed(() => {
   const list = [current.image, ...current.gallery.filter((url) => url !== current.image)]
   return [...new Set(list.filter(Boolean))]
 })
+
+/** 正文按 {argument…} 变量拆段，变量在渲染时单独加粗 */
+const promptParts = computed(() => (detail.value?.prompt ?? '').split(/(\{[^}]*\})/))
+
+function isPromptToken(part: string): boolean {
+  return part.startsWith('{') && part.endsWith('}')
+}
 
 const metaDescription = computed(() => {
   const text = detail.value?.prompt
@@ -85,6 +93,8 @@ watch(promptId, () => {
 </script>
 
 <template>
+  <DetailTopNav />
+
   <main v-if="!settled" class="min-h-screen bg-[#fbfafc] px-5 py-8 sm:px-8 sm:py-12">
     <div class="mx-auto max-w-6xl space-y-5">
       <div class="skeleton-line w-32" />
@@ -149,7 +159,7 @@ watch(promptId, () => {
         </div>
 
         <div class="flex flex-col p-6 sm:p-9 lg:p-11">
-          <nav class="text-xs font-medium text-zinc-400">
+          <nav class="text-xs font-semibold text-zinc-400">
             <RouterLink to="/" class="hover:text-violet-600">提示词库</RouterLink>
             <span class="mx-2">›</span>
             <RouterLink
@@ -162,7 +172,7 @@ watch(promptId, () => {
             <span class="text-violet-600">{{ view.category }}</span>
           </nav>
 
-          <h1 class="mt-5 text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
+          <h1 class="mt-5 text-3xl font-black tracking-tight text-zinc-900 sm:text-4xl">
             {{ view.title }}
           </h1>
 
@@ -174,7 +184,7 @@ watch(promptId, () => {
               v-for="tag in view.tags"
               :key="tag"
               :to="{ name: 'discover', query: { major: view.major, q: tag } }"
-              class="rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-violet-50 hover:text-violet-700"
+              class="rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-600 transition hover:bg-violet-50 hover:text-violet-700"
             >
               #{{ tag }}
             </RouterLink>
@@ -207,7 +217,10 @@ watch(promptId, () => {
               v-if="detail"
               class="max-h-72 overflow-auto whitespace-pre-wrap rounded-2xl border border-zinc-200 bg-zinc-50 p-5 text-sm leading-7 text-zinc-700"
             >
-              {{ detail.prompt }}
+              <template v-for="(part, index) in promptParts" :key="index">
+                <span v-if="isPromptToken(part)" class="font-semibold text-violet-700">{{ part }}</span>
+                <template v-else>{{ part }}</template>
+              </template>
             </p>
             <div
               v-else-if="textError"

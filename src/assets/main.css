@@ -143,11 +143,11 @@ button {
 .nav-item.active {
   color: var(--purple-dark);
   background: var(--purple-soft);
-  font-weight: 600;
+  font-weight: 700;
 }
 .nav-item.sub-active {
   color: var(--purple-dark);
-  font-weight: 600;
+  font-weight: 700;
 }
 .nav-item small {
   margin-left: auto;
@@ -170,6 +170,11 @@ button {
   height: 34px;
   padding-left: 7px;
   font-size: 11px;
+}
+/* 大类（以及「全部」）始终加粗，当前细分类同样加粗 */
+.category-tree > .nav-item,
+.nav-row > .nav-item {
+  font-weight: 700;
 }
 .category-tree .nav-item > span {
   min-width: 0;
@@ -330,6 +335,69 @@ button {
 .main {
   margin-left: 224px;
   min-height: 100vh;
+}
+
+/* ---------- 详情页顶部导航 ---------- */
+
+.detail-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #fffffff2;
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(14px);
+}
+.detail-nav-inner {
+  max-width: 1290px;
+  height: 64px;
+  margin: 0 auto;
+  padding: 0 4.2%;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.detail-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.detail-nav-link {
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: #65616d;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: 0.18s ease;
+}
+.detail-nav-link:hover {
+  color: var(--text);
+  background: #f7f5fa;
+}
+.detail-nav-link.is-active {
+  color: var(--purple-dark);
+  background: var(--purple-soft);
+  font-weight: 700;
+}
+.detail-nav-submit {
+  margin-left: auto;
+  height: 38px;
+  padding: 0 17px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 999px;
+  background: var(--purple);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 8px 20px #7257e638;
+  transition: 0.18s ease;
+}
+.detail-nav-submit:hover {
+  background: var(--purple-dark);
+  transform: translateY(-1px);
 }
 .mobile-bar {
   display: none;
@@ -1221,6 +1289,37 @@ a.shuffle-btn {
 @media (max-width: 1100px) {
   .floating-search {
     width: min(520px, calc(100vw - 264px));
+  }
+}
+
+@media (max-width: 640px) {
+  .detail-nav-inner {
+    height: 58px;
+    padding: 0 16px;
+    gap: 10px;
+  }
+  .detail-nav-links {
+    gap: 0;
+  }
+  .detail-nav-link {
+    padding: 7px 9px;
+    font-size: 12.5px;
+  }
+  .detail-nav-submit {
+    height: 34px;
+    padding: 0 12px;
+  }
+}
+
+@media (max-width: 460px) {
+  .detail-nav .brand > span:last-child,
+  .detail-nav-submit span {
+    display: none;
+  }
+  .detail-nav-submit {
+    width: 34px;
+    padding: 0;
+    justify-content: center;
   }
 }
 

@@ -1,29 +1,33 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import EmptyState from '@/components/base/EmptyState.vue'
 import HeroSection from '@/components/HeroSection.vue'
 import PromptMasonryCard from '@/components/PromptMasonryCard.vue'
 import heroBg from '@/assets/images/home-hero-bg.png'
-import { matchesQuery } from '@/data/library'
+import { dailySeed, matchesQuery, seededOrder } from '@/data/library'
 import { useLibraryStore } from '@/stores/library'
 import type { Prompt } from '@/types/prompt'
 
 /** 每日精选展示条数 */
 const DAILY_COUNT = 12
-/** 「换一批」每次错开的条数 */
-const SHUFFLE_STEP = DAILY_COUNT
 
 const library = useLibraryStore()
 
 const query = ref('')
-const offset = ref(0)
+/** 以本地日历日为种子：每天换一批；跨天自动回到第一组 */
+const dayIndex = ref(dailySeed())
+const group = ref(0)
+/** 当天池子能切出的「换一批」组数 */
+const dailyGroupCount = computed(() =>
+  Math.max(Math.ceil((library.featuredPool.length || 0) / DAILY_COUNT), 1),
+)
 
 /** 首页快捷入口：按提示词数量取前 8 个大类 */
 const shortcuts = computed(() =>
   [...(library.meta?.majors ?? [])].sort((a, b) => b.count - a.count).slice(0, 8),
 )
 
-/** 无关键词时轮转「高赞精选池」；有关键词时在全库里按点赞排序取前 N 条 */
+/** 无关键词时按当天种子打乱「高赞精选池」取一组；有关键词时在全库里按点赞排序取前 N 条 */
 const dailyPrompts = computed<readonly Prompt[]>(() => {
   const needle = query.value.trim().toLowerCase()
   if (needle) {
@@ -33,8 +37,10 @@ const dailyPrompts = computed<readonly Prompt[]>(() => {
   }
   const pool = library.featuredPool
   if (!pool.length) return []
-  const start = offset.value % pool.length
-  return [...pool.slice(start), ...pool.slice(0, start)].slice(0, DAILY_COUNT)
+  const order = seededOrder(pool.length, dayIndex.value)
+  const start = (group.value * DAILY_COUNT) % order.length
+  const indices = [...order.slice(start), ...order.slice(0, start)].slice(0, DAILY_COUNT)
+  return indices.map((index) => pool[index])
 })
 
 /** 搜索命中的总数，用于提示「只展示了前 12 条」 */
@@ -47,14 +53,29 @@ const matchedTotal = computed(() => {
 const searching = computed(() => Boolean(query.value.trim()))
 const initializing = computed(() => !library.loaded && !library.error)
 
+let dayTimer: number | undefined
+
 onMounted(() => {
   void library.ensureLoaded().catch(() => {
     // 失败信息已写入 store.error，由模板展示重试入口
   })
+  // 页面跨天时自动切到新一天的批次
+  dayTimer = window.setInterval(() => {
+    const today = dailySeed()
+    if (today !== dayIndex.value) {
+      dayIndex.value = today
+      group.value = 0
+    }
+  }, 60_000)
 })
 
+onUnmounted(() => {
+  if (dayTimer !== undefined) window.clearInterval(dayTimer)
+})
+
+/** 「换一批」：切到当天种子打乱后的下一组 */
 function shuffle(): void {
-  offset.value = (offset.value + SHUFFLE_STEP) % Math.max(library.featuredPool.length, 1)
+  group.value = (group.value + 1) % dailyGroupCount.value
 }
 
 function scrollToResults(): void {
@@ -93,7 +114,7 @@ function retry(): void {
             <span v-if="searching">
               命中 {{ matchedTotal }} 条，按点赞展示前 {{ dailyPrompts.length }} 条
             </span>
-            <span v-else>从 {{ library.featuredPool.length }} 条高赞提示词里挑一组</span>
+            <span v-else>每天更新一组 · 从 {{ library.featuredPool.length }} 条高赞提示词里精选</span>
           </div>
           <button v-if="!searching" class="shuffle-btn" type="button" @click="shuffle">
             <span>↻</span> 换一批

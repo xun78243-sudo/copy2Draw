@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import NotFoundView from '@/views/NotFoundView.vue'
 import DetailTopNav from '@/components/DetailTopNav.vue'
+import ImageViewer from '@/components/ImageViewer.vue'
 import PromptDetailActions from '@/components/PromptDetailActions.vue'
 import { formatCount, relatedPrompts, resolvePrompt } from '@/data/library'
 import { useImageFallback } from '@/composables/useImageFallback'
@@ -40,6 +41,15 @@ const images = computed(() => {
   const list = [current.image, ...current.gallery.filter((url) => url !== current.image)]
   return [...new Set(list.filter(Boolean))]
 })
+
+/** 主图点击 → 弹窗放大查看（滚轮缩放 / 拖拽平移），不再跳转到原图链接 */
+const viewerOpen = ref(false)
+const viewerSrc = ref('')
+
+function openImageViewer(): void {
+  viewerSrc.value = activeImage.value || view.value?.image || ''
+  viewerOpen.value = true
+}
 
 /** 正文按 {argument…} 变量拆段，变量在渲染时单独加粗 */
 const promptParts = computed(() => (detail.value?.prompt ?? '').split(/(\{[^}]*\})/))
@@ -123,12 +133,12 @@ watch(promptId, () => {
         class="mt-5 grid overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-[0_20px_70px_rgba(36,28,61,0.09)] lg:grid-cols-[1.05fr_0.95fr]"
       >
         <div class="flex flex-col gap-3 bg-zinc-100 p-4 sm:p-7">
-          <a
-            :href="activeImage || view.image"
-            target="_blank"
-            rel="noopener"
+          <button
+            type="button"
             class="grid min-h-80 flex-1 place-items-center"
-            :title="`在新窗口查看「${view.title}」原图`"
+            :title="`点击放大查看「${view.title}」`"
+            :aria-label="`点击放大查看${view.title}大图`"
+            @click="openImageViewer"
           >
             <img
               :src="activeImage || view.image"
@@ -136,7 +146,7 @@ watch(promptId, () => {
               class="max-h-[72vh] w-auto max-w-full rounded-2xl object-contain shadow-xl shadow-zinc-300/40"
               @error="onImageError($event, view.title, view.major)"
             />
-          </a>
+          </button>
 
           <div v-if="images.length > 1" class="flex flex-wrap gap-2">
             <button
@@ -286,4 +296,12 @@ watch(promptId, () => {
   </main>
 
   <NotFoundView v-else title="提示词不存在" description="这条提示词可能已被删除，或者链接有误。" />
+
+  <ImageViewer
+    v-if="viewerOpen && viewerSrc"
+    :src="viewerSrc"
+    :label="view?.title"
+    :major="view?.major"
+    @close="viewerOpen = false"
+  />
 </template>

@@ -45,6 +45,39 @@ export function formatTotal(value: number): string {
   return value.toLocaleString('en-US')
 }
 
+/** 当天精选的随机源：本地日历日转成稳定整数，跨天自动 +1 */
+export function dailySeed(date = new Date()): number {
+  return Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86_400_000)
+}
+
+/** 确定性伪随机数生成器（mulberry32）：同一种子产出固定序列 */
+function mulberry32(seed: number): () => number {
+  let state = seed >>> 0
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0
+    let t = state
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296
+  }
+}
+
+/**
+ * 以 seed 为种子生成 0..length-1 的确定性随机排列（Fisher-Yates）。
+ * 首页「今日灵感」用它按日期每天打乱精选池，保证每天一批不同图片、且同一天内稳定。
+ */
+export function seededOrder(length: number, seed: number): number[] {
+  const order = Array.from({ length }, (_, index) => index)
+  const rand = mulberry32(seed)
+  for (let i = order.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rand() * (i + 1))
+    const tmp = order[i]
+    order[i] = order[j]
+    order[j] = tmp
+  }
+  return order
+}
+
 /** 把原始条目映射为列表视图模型；majorOf 负责细分类 → 大类 */
 export function toPrompt(
   raw: PromptRecordRaw,

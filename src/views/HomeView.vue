@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import EmptyState from '@/components/base/EmptyState.vue'
 import HeroSection from '@/components/HeroSection.vue'
 import PromptMasonryCard from '@/components/PromptMasonryCard.vue'
+import heroBg from '@/assets/images/home-hero-bg.png'
 import { matchesQuery } from '@/data/library'
 import { useLibraryStore } from '@/stores/library'
 import type { Prompt } from '@/types/prompt'
@@ -70,57 +71,61 @@ function retry(): void {
 </script>
 
 <template>
-  <div id="library" class="content">
-    <HeroSection
-      v-model:query="query"
-      :total="library.total"
-      :major-count="library.meta?.majors.length ?? 0"
-      :sub-count="library.subCategoryCount"
-      :majors="shortcuts"
-      @search="scrollToResults"
-    />
+  <div class="home">
+    <img class="home-hero-bg" :src="heroBg" alt="" aria-hidden="true" />
 
-    <section id="daily-results" class="results daily-results">
-      <div class="results-head">
-        <div>
-          <h2>{{ searching ? '搜索结果' : '今日灵感' }}</h2>
-          <span v-if="searching">
-            命中 {{ matchedTotal }} 条，按点赞展示前 {{ dailyPrompts.length }} 条
-          </span>
-          <span v-else>从 {{ library.featuredPool.length }} 条高赞提示词里挑一组</span>
+    <div id="library" class="content">
+      <HeroSection
+        v-model:query="query"
+        :total="library.total"
+        :major-count="library.meta?.majors.length ?? 0"
+        :sub-count="library.subCategoryCount"
+        :majors="shortcuts"
+        @search="scrollToResults"
+      />
+
+      <section id="daily-results" class="results daily-results">
+        <div class="results-head">
+          <div>
+            <h2>{{ searching ? '搜索结果' : '今日灵感' }}</h2>
+            <span v-if="searching">
+              命中 {{ matchedTotal }} 条，按点赞展示前 {{ dailyPrompts.length }} 条
+            </span>
+            <span v-else>从 {{ library.featuredPool.length }} 条高赞提示词里挑一组</span>
+          </div>
+          <button v-if="!searching" class="shuffle-btn" type="button" @click="shuffle">
+            <span>↻</span> 换一批
+          </button>
+          <RouterLink v-else class="shuffle-btn" :to="{ name: 'discover', query: { q: query } }">
+            在发现页查看全部 →
+          </RouterLink>
         </div>
-        <button v-if="!searching" class="shuffle-btn" type="button" @click="shuffle">
-          <span>↻</span> 换一批
-        </button>
-        <RouterLink v-else class="shuffle-btn" :to="{ name: 'discover', query: { q: query } }">
-          在发现页查看全部 →
-        </RouterLink>
-      </div>
 
-      <div v-if="initializing" class="masonry-grid daily-masonry" aria-hidden="true">
-        <div v-for="n in 6" :key="n" class="skeleton-card" :class="`skeleton-h${(n % 3) + 1}`" />
-      </div>
+        <div v-if="initializing" class="masonry-grid daily-masonry" aria-hidden="true">
+          <div v-for="n in 6" :key="n" class="skeleton-card" :class="`skeleton-h${(n % 3) + 1}`" />
+        </div>
 
-      <EmptyState
-        v-else-if="library.error"
-        icon="image"
-        title="数据加载失败"
-        :description="library.error"
-        action-text="重新加载"
-        @action="retry"
-      />
+        <EmptyState
+          v-else-if="library.error"
+          icon="image"
+          title="数据加载失败"
+          :description="library.error"
+          action-text="重新加载"
+          @action="retry"
+        />
 
-      <div v-else-if="dailyPrompts.length" class="masonry-grid daily-masonry">
-        <PromptMasonryCard v-for="item in dailyPrompts" :key="item.id" :prompt="item" />
-      </div>
+        <div v-else-if="dailyPrompts.length" class="masonry-grid daily-masonry">
+          <PromptMasonryCard v-for="item in dailyPrompts" :key="item.id" :prompt="item" />
+        </div>
 
-      <EmptyState
-        v-else
-        title="没有找到相关灵感"
-        description="换个关键词试试，或者到发现页按分类浏览。"
-        action-text="清除搜索"
-        @action="clearSearch"
-      />
-    </section>
+        <EmptyState
+          v-else
+          title="没有找到相关灵感"
+          description="换个关键词试试，或者到发现页按分类浏览。"
+          action-text="清除搜索"
+          @action="clearSearch"
+        />
+      </section>
+    </div>
   </div>
 </template>

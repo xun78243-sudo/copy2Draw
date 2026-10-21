@@ -567,7 +567,7 @@ button {
   color: var(--purple-dark);
 }
 
-/* ---------- 首页顶部背景图（衬于文字下方，右端向窗口渐隐） ---------- */
+/* ---------- 首页顶部背景图（衬于文字下方，边缘向页面白渐融） ---------- */
 
 .home {
   position: relative;
@@ -580,10 +580,21 @@ button {
   z-index: -1;
   width: 100%;
   height: clamp(300px, 38vw, 729px);
-  object-fit: cover;
   pointer-events: none;
-  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 50%, transparent 100%);
-  mask-image: linear-gradient(to right, #000 0%, #000 50%, transparent 100%);
+}
+.home-hero-bg img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.home-hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right, transparent 0%, transparent 50%, #fbfafc 100%),
+    linear-gradient(to bottom, transparent 0%, transparent 60%, #fbfafc 100%);
 }
 
 /* ---------- 结果区与卡片 ---------- */

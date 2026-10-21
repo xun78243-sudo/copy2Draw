@@ -72,7 +72,9 @@ function retry(): void {
 
 <template>
   <div class="home">
-    <img class="home-hero-bg" :src="heroBg" alt="" aria-hidden="true" />
+    <div class="home-hero-bg" aria-hidden="true">
+      <img :src="heroBg" alt="" />
+    </div>
 
     <div id="library" class="content">
       <HeroSection

@@ -83,6 +83,7 @@ npm run data:check   # 校验覆盖层，并确认 public/data 与 content/ 同�
     │   ├── usePromptActions.ts# 复制/收藏/下载一站式操作（含正文按需加载）
     │   ├── useIncrementalList.ts # 增量渲染：一次最多挂 N 张卡片
     │   ├── useImageFallback.ts   # 原图缺失时就地换成 SVG 占位
+    │   ├── useVisitorStats.ts    # 站点访问计数（Vercount）与今日/累计数据
     │   └── usePageMeta.ts     # 动态标题与 description
     ├── layouts/DefaultLayout.vue # 侧边栏 + 移动顶栏 + <RouterView>
     ├── components
@@ -96,6 +97,7 @@ npm run data:check   # 校验覆盖层，并确认 public/data 与 content/ 同�
     │   ├── PromptGridCard.vue    # 网格卡片（发现页）
     │   ├── PromptDetailActions.vue # 详情页四个操作按钮
     │   ├── VariableDialog.vue    # 「填变量并复制」弹窗
+    │   ├── VisitorStatsCard.vue  # 投稿页右下角的访问统计卡
     │   └── base
     │       ├── AppIcon.vue / icons.ts # 线性图标集
     │       ├── AppLogo.vue
@@ -204,6 +206,27 @@ npm run data:check    # 校验覆盖层与产物是否一致
 - 侧栏分类树按大类折叠：大类行本身负责筛选，箭头独立展开/收起它的细分类；当前大类自动展开，展开后由整条侧栏滚动（不再在树里套一层滚动条），「投稿」固定在所有分类之后。
 - 开发服务器忽略 `content/`、`public/data/`、`data/base/` 的文件变化，避免 `/studio` 每次保存都整页刷新。
 
+## 站点访问统计
+
+投稿页右下角有一张统计卡（今日访问 / 总访问量 / 总访客数），数据来自
+[Vercount](https://www.vercount.one/)（免费、无需注册、接口已开放 CORS），
+实现在 [`src/composables/useVisitorStats.ts`](src/composables/useVisitorStats.ts)：
+
+- 每次页面加载向 `https://events.vercount.one/api/v2/log` POST 一次 `{ url, isNewUv }`，
+  返回 `{ site_pv, site_uv, page_pv }`；SPA 内部跳转不会再计数；
+- `site_pv` → 总访问量，`site_uv` → 总访客数（1 年期 cookie 去重，cookie 名与官方 js 一致）；
+- Vercount 没有按天字段，所以上报 URL 用 `{origin}/__stats/{YYYY-MM-DD}`：站点 PV 仍是一次访问记一次，
+  而 `page_pv` 天然变成「今日」的计数桶；
+- **本地/内网地址**（`localhost`、`127.0.0.1`、`192.168.x`、`*.local` 等）会把流量记到
+  `https://copy2draw.invalid`（RFC 2606 保留域名）的演示桶里。原因：Vercount 对这类地址会回落到它自己的
+  全站汇总桶，直接显示会看到上千万的别人的数据；改用演示桶后本地预览也能看到真实自增的小数字，
+  上线后自动切回自己的域名；
+- 请求失败或 6 秒超时会沿用 `localStorage` 里上一次的缓存值，没有缓存就显示「—」，不影响页面渲染；
+- 只做一次浏览器端 POST，不采集任何个人信息；换自建统计时改这一个文件里的 `ENDPOINT` 与字段映射即可。
+
+> 口径说明：「今日访问」是当日访问次数（刷新会累加），「总访客数」才是去重后的人数。
+> Vercount 不提供按天的 UV，若需要「今日xx人」严格去重，得换服务或自建接口。
+
 ## 验证情况
 
 - `npm run typecheck`、`npm run build` 均通过（无类型错误、无构建告警）；生产产物中不含 `/studio` 与 `/__studio/api`。
@@ -214,6 +237,9 @@ npm run data:check    # 校验覆盖层与产物是否一致
 - `/studio` 界面 **23 项浏览器断言**：默认 24 行、搜索过滤、来源筛选、新建→待重建→重建→总数 +1、编辑后标题生效、图片体检返回、删除后回到基线、首页回归、零 console 错误。
 - 数据层改造后回归 **24 项断言**：每日精选 12 张与换一批轮转、详情页正文按需加载、变量弹窗（输入→实时预览→复制成品→自动关闭）、无效 id 404、发现页 13 个大类标签与 URL 同步、悬浮搜索、收藏刷新后保持、零 console 错误。
 - 生产产物 **8 项断言**：`/studio` 回落 404、接口不返回 JSON、首页与发现页数据正常加载。
+- 投稿页访问统计卡 **22 项浏览器断言**：卡片贴右下角（桌面 24px / 移动 12px）、只发一次 POST、
+  上报地址带按天分桶与演示桶、UV cookie 与本地缓存写入、SPA 内跳转不重复上报、
+  首页与发现页不出现该卡片、移动端无横向滚动、零 console 错误。
 
 ## 署名与许可
 

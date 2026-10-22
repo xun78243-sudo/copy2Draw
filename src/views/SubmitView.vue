@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppIcon from '@/components/base/AppIcon.vue'
+import VisitorStatsCard from '@/components/VisitorStatsCard.vue'
 
 const SUBMIT_EMAIL = 'copy2draw@gmail.com'
 const MAIL_SUBJECT = '投稿 + 分类'
@@ -34,5 +35,8 @@ const mailto = `mailto:${SUBMIT_EMAIL}?subject=${encodeURIComponent(MAIL_SUBJECT
         <a :href="mailto">{{ SUBMIT_EMAIL }}</a>
       </section>
     </div>
+
+    <div class="visit-card-gap" aria-hidden="true" />
+    <VisitorStatsCard />
   </div>
 </template>
